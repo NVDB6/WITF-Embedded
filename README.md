@@ -1,2 +1,2 @@
-# embedded
-Software on raspberry pi
+# Readme
+Raspberry Pi software
