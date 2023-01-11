@@ -68,6 +68,7 @@ This will take a long time... (>20 mins)
 ```
 pip install pyqt5 --config-settings --confirm-license= --verbose
 ```
+> **AttributeError**: module 'sipbuild.api' has no attribute 'prepare_metadata_for_build_wheel'. Run `conda instal pyqt` then run this command again
 
 #### 5.6. Install pixellib
 ```
