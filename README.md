@@ -43,7 +43,7 @@ pip install tensorflow-metal==0.2.0
 ```
 #### 5.2. Install numpy
 ```
-conda uninstall numpy & conda install numpy
+conda uninstall numpy & conda install numpy=1.19.2
 ```
 
 > **clang: error: the clang compiler does not support 'faltivec'**. To fix run: `brew install openblas &&
