@@ -60,6 +60,7 @@ coverage.xml
 
 # IDE things
 .idea
+.vscode
 
 # Django stuff:
 *.log
@@ -115,6 +116,9 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+# Mac
+.DS_Store
 
 # Spyder project settings
 .spyderproject
