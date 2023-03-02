@@ -29,7 +29,7 @@ base_selected_frame_id = None
 
 def classify(frame, width, height, top, bottom, debug=False):
     # Setup
-    global action_segment, handedness_in
+    global action_segment, handedness_in, base_selected_frame_id
     selected_frame_id = None
     selected_frame = None
 
@@ -55,8 +55,8 @@ def classify(frame, width, height, top, bottom, debug=False):
                 if prev_action_segment == constants.ActionSegment.OUT:
                     # When hand goes in this is a new action segment so reset the base frame id
                     base_selected_frame_id = None
-                    selected_frame_id = generate_frame_id(prev_action_segment)
-                    base_selected_frame_id = selected_frame_id[:8]
+                    selected_frame_id = generate_frame_id(action_segment)
+                    base_selected_frame_id = selected_frame_id.split('_')[1]
 
                     selected_frame = frame.copy()
                     draw_label(selected_frame)
@@ -67,11 +67,9 @@ def classify(frame, width, height, top, bottom, debug=False):
 
                 # If hand goes out of the fridge capture this frame
                 if prev_action_segment == constants.ActionSegment.IN:
-                    selected_frame_id = generate_frame_id(prev_action_segment)
-
                     selected_frame = frame.copy()
                     draw_label(selected_frame)
-                    selected_frame_id = generate_frame_id(prev_action_segment)
+                    selected_frame_id = generate_frame_id(action_segment)
 
             # Draw handlandmarks
             if debug:
@@ -102,9 +100,11 @@ def draw_label(frame):
 
 def generate_frame_id(prev_action_segment):
     global base_selected_frame_id
+    print(base_selected_frame_id)
+
     if base_selected_frame_id is None:
         base_selected_frame_id = str(uuid.uuid4())[:8]
 
-    uid = f'{base_selected_frame_id}_{int(time.time())}_{prev_action_segment.name}'
+    uid = f'{int(time.time())}_{base_selected_frame_id}_{prev_action_segment.name}'
     return uid
     
