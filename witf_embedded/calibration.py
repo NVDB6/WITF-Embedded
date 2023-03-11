@@ -9,17 +9,17 @@ resource_dir = '../resources/'
 video_name = 'calibration_test_3_short.mp4'
 video_path = f'{resource_dir}/input/{video_name}'
 
-def manual_calibrate(capture) -> Tuple[Tuple[int,int], Tuple[int, int]]:
+def manual_calibrate(capture=None, pi_camera=None) -> Tuple[Tuple[int,int], Tuple[int, int]]:
     p1 = (0, 0)
     p2 = (0, 0)
     start_point = (0, 0)
     end_point = (0, 0)
-    width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH)) if capture else pi_camera.camera_config['lores']['size'][0]
+    height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT)) if capture else pi_camera.camera_config['lores']['size'][1]
 
     line_drawn = False
 
-    ret, frame = capture.read()
+    ret, frame = capture.read() if capture else (True, cv2.cvtColor(pi_camera.capture_array('lores'), cv2.COLOR_YUV420p2RGB))
     orig = frame.copy()
 
     if not ret:
@@ -73,7 +73,7 @@ def manual_calibrate(capture) -> Tuple[Tuple[int,int], Tuple[int, int]]:
 
         # If user presses 'r', reload the frame
         if key == ord('r'):
-            ret, frame = capture.read()
+            ret, frame = capture.read() if capture else (True, cv2.cvtColor(pi_camera.capture_array('lores'), cv2.COLOR_YUV420p2RGB))
             orig = frame.copy()
             if not ret:
                 sys.exit("Could not get frame for calibration")

@@ -27,7 +27,7 @@ text_size = cv.getTextSize(action_segment.name, font, font_scale, 1)[0]
 handedness_in = None
 base_selected_frame_id = None
 
-def classify(frame, width, height, top, bottom, debug=False):
+def classify(frame, width, height, top, bottom, debug=False, no_convert=False):
     # Setup
     global action_segment, handedness_in, base_selected_frame_id
     selected_frame_id = None
@@ -35,7 +35,8 @@ def classify(frame, width, height, top, bottom, debug=False):
 
     # Run hand detection
     frame.flags.writeable = False
-    frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
+    if not no_convert:
+        frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
     results = hands.process(frame)
     frame.flags.writeable = True
     frame = cv.cvtColor(frame, cv.COLOR_RGB2BGR)

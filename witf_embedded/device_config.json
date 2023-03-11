@@ -1,14 +1,1 @@
-{
-    "boundary": {
-        "top": {
-            "x": 673,
-            "y": 0
-        },
-        "bottom": {
-            "x": 687,
-            "y": 720
-        }
-    },
-    "width": 1280,
-    "height": 720
-}
+{"boundary": {"top": {"x": 349, "y": 0}, "bottom": {"x": 371, "y": 480}}, "width": 640, "height": 480}

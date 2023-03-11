@@ -112,7 +112,7 @@ celerybeat.pid
 .env
 .venv
 env/
-venv/
+venv*/
 ENV/
 env.bak/
 venv.bak/
@@ -147,3 +147,6 @@ dmypy.json
 /dataSources/
 /dataSources.local.xml
 resources/.DS_Store
+
+# debug
+/debug
