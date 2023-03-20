@@ -27,7 +27,7 @@ text_size = cv.getTextSize(action_segment.name, font, font_scale, 1)[0]
 handedness_in = None
 base_selected_frame_id = None
 
-def classify(frame, width, height, top, bottom, debug=False, no_convert=False):
+def classify(frame, width, height, top, bottom, fridge_left, debug=False, no_convert=False):
     # Setup
     global action_segment, handedness_in, base_selected_frame_id
     selected_frame_id = None
@@ -48,7 +48,7 @@ def classify(frame, width, height, top, bottom, debug=False, no_convert=False):
             prev_action_segment = action_segment
             
             # Hand in fridge
-            if (hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_TIP].x * width > top['x']):
+            if (hand_in_fridge(hand_landmarks, width, top, fridge_left)):
                 handedness_in = handedness.classification[0].label
                 action_segment = constants.ActionSegment.IN
 
@@ -87,6 +87,11 @@ def classify(frame, width, height, top, bottom, debug=False, no_convert=False):
         draw_label(frame)
 
     return frame, selected_frame, selected_frame_id
+
+
+def hand_in_fridge(hand_landmarks, width, top, fridge_left):
+    hand_left = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_TIP].x * width < top['x']
+    return hand_left == fridge_left # Hand in fridge if both are in the left side or right side
 
 
 def draw_label(frame):

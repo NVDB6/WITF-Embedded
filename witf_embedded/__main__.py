@@ -17,6 +17,7 @@ parser.add_argument('--v', type=str,
     help='[Optional] The name of the video to run the program on. If not provided, will capture from camera feed.')
 parser.add_argument('--sf', type=str, help='[Optional] Save the selected frames to the given directory')
 parser.add_argument('--c', action='store_false', help='[Optional] Go through calibration setup')
+parser.add_argument('--fl', action='store_true', help='[Optional] Inidicate if fridge is on left or right side of the frame')
 parser.add_argument('--pi', action='store_true', help='[Optional] Run script using config for raspberry pi')
 
 group = parser.add_mutually_exclusive_group()
@@ -29,6 +30,7 @@ args = parser.parse_args()
 video_path = args.v and os.path.join(constants.INPUT_DIR, args.v)
 save_frame_dir = args.sf and os.path.join(constants.OUTPUT_DIR, args.sf)
 debug = bool(args.sv) or args.d
+fridge_left = args.fl
 calibrated = args.c and os.path.exists(constants.DEVICE_CONFIG_FILE)
 save_path = args.sv and os.path.join(constants.OUTPUT_DIR, args.sv)
 use_pi = args.pi
@@ -101,7 +103,7 @@ while True:
         counter +=1
         # Action Segmentation
         s = time.perf_counter()
-        frame, selected_frame, selected_frame_id = classify(frame, width, height, top, bottom, debug=debug, no_convert=use_pi)
+        frame, selected_frame, selected_frame_id = classify(frame, width, height, top, bottom, fridge_left, debug=debug)
         f = time.perf_counter()
         classify_time += f-s
         if selected_frame is not None and save_frame_dir:

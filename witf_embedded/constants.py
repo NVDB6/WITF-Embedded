@@ -20,3 +20,6 @@ class ActionSegment(Enum):
     OUT = 0
     IN = 1
     UNDEF = 2
+class Position(Enum):
+    Left = 0
+    RIGHT = 1

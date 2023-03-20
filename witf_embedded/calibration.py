@@ -20,10 +20,11 @@ def manual_calibrate(capture=None, pi_camera=None) -> Tuple[Tuple[int,int], Tupl
     line_drawn = False
 
     ret, frame = capture.read() if capture else (True, cv2.cvtColor(pi_camera.capture_array('lores'), cv2.COLOR_YUV420p2RGB))
-    orig = frame.copy()
 
     if not ret:
         sys.exit("Could not get frame for calibration")
+    
+    orig = frame.copy()
 
     # Create a named window to display the image
     cv2.namedWindow("Calibrate")
@@ -42,12 +43,14 @@ def manual_calibrate(capture=None, pi_camera=None) -> Tuple[Tuple[int,int], Tupl
                 p2 = (x, y)
 
         if p1 != (0, 0) and p2 != (0, 0):
-            # Calculate the slope of the line
-            slope = (p2[1]-p1[1])/(p2[0]-p1[0])
+            # Calculate the slope of the line, None if slope is vertical
+            delta_y = (p2[1]-p1[1])
+            delta_x = (p2[0]-p1[0])
+            slope = delta_y/delta_x if delta_x != 0 else None
             # Calculate the x-int of the line
-            x_intercept = (frame.shape[0] - p1[1])/slope + p1[0]
+            x_intercept = (frame.shape[0] - p1[1])/slope + p1[0] if slope != None else p1[0]
             # Calculate the start and end point of the line
-            start_point = ((int(-p1[1]/slope) + p1[0], 0))
+            start_point = ((int(-p1[1]/slope if slope != None else 0) + p1[0], 0))
             end_point = ((int(x_intercept), frame.shape[0]))
             # Draw the line
             cv2.line(frame, start_point, end_point, (0, 255, 0), 2)
