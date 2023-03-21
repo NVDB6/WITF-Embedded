@@ -4,9 +4,9 @@ import time
 import cv2
 import constants
 import argparse
-from picamera2 import Picamera2 
-from picamera2.encoders import H264Encoder
-from picamera2.outputs import FfmpegOutput
+# from picamera2 import Picamera2 
+# from picamera2.encoders import H264Encoder
+# from picamera2.outputs import FfmpegOutput
 from calibration import manual_calibrate
 from classify import classify
 
@@ -44,8 +44,6 @@ if use_pi:
     picam2.start()
 else:
     capture = cv2.VideoCapture(video_path or 0)
-    print('cap start')
-
 
 ### Calibrate ###
 if not calibrated:
@@ -101,21 +99,26 @@ while True:
 
     if ret:
         counter +=1
+
         # Action Segmentation
         s = time.perf_counter()
-        frame, selected_frame, selected_frame_id = classify(frame, width, height, top, bottom, fridge_left, debug=debug)
+        frame, selected_frames, selected_frame_ids = classify(frame, width, height, top, bottom, fridge_left, debug=debug)
         f = time.perf_counter()
         classify_time += f-s
-        if selected_frame is not None and save_frame_dir:
-            cv2.imwrite(os.path.join(save_frame_dir, f'frame_{selected_frame_id}.png'), selected_frame)
+        if selected_frames and save_frame_dir:
+            for i, (selected_frame, selected_frame_id) in enumerate(zip(selected_frames, selected_frame_ids)):
+                cv2.imwrite(os.path.join(save_frame_dir, f'frame_{selected_frame_id}_{i+1}.png'), selected_frame)
+
         # Display the image
         s = time.perf_counter()
         cv2.imshow("Capture", frame)
         f = time.perf_counter()
         show_time += f-s
+
         # Write frame to video
         if save_path:
             save_video.write(frame)
+
         # Debug output
         if debug:
             if counter % 50 == 0:
@@ -141,12 +144,12 @@ except:
 
 cv2.destroyAllWindows()
 
-print(f'Processed {counter} frames in {time.time()-start}s.')
-
 if save_path:
     save_video.release()
     print(f'Video saved to {save_path}')
 
+
+print(f'Processed {counter} frames in {time.time()-start}s.')
 print(f'Fps avg: {counter/(time.time()-start)}')
 print(f'Cap avg: {cap_time/counter}')
 print(f'Classify avg: {classify_time/counter}')

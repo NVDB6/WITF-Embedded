@@ -150,3 +150,7 @@ resources/.DS_Store
 
 # debug
 /debug
+
+# resources
+/resources/input
+/resources/output

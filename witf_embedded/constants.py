@@ -16,6 +16,8 @@ FPS = 30
 # Hand Tracking
 MIN_DETECTION_CONFIDENCE = 0.8
 MIN_TRACKING_CONFIDENCE = 0.8
+
+# Actions
 class ActionSegment(Enum):
     OUT = 0
     IN = 1
@@ -23,3 +25,6 @@ class ActionSegment(Enum):
 class Position(Enum):
     Left = 0
     RIGHT = 1
+
+# Frame Selection
+FRAME_BUFFER_SIZE = 5

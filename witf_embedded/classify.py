@@ -1,3 +1,5 @@
+from collections import deque
+import queue
 import time
 import mediapipe as mp
 import cv2 as cv
@@ -16,22 +18,24 @@ hands = mp_hands.Hands(
     min_tracking_confidence=constants.MIN_TRACKING_CONFIDENCE,
 )
 
-# Text Stuff
-font = cv.FONT_HERSHEY_SIMPLEX
-font_scale = 2
-action_segment = constants.ActionSegment.OUT
-color = (255, 255, 255)
-text_size = cv.getTextSize(action_segment.name, font, font_scale, 1)[0]
-
 # Globals
 handedness_in = None
 base_selected_frame_id = None
+frame_buffer = deque(maxlen=constants.FRAME_BUFFER_SIZE)
+flush_buffer = False
+out_frame_count = -1
+action_segment = constants.ActionSegment.OUT
+
+# Text Stuff
+font = cv.FONT_HERSHEY_SIMPLEX
+font_scale = 2
+color = (255, 255, 255)
+text_size = cv.getTextSize(action_segment.name, font, font_scale, 1)[0]
+
 
 def classify(frame, width, height, top, bottom, fridge_left, debug=False, no_convert=False):
     # Setup
-    global action_segment, handedness_in, base_selected_frame_id
-    selected_frame_id = None
-    selected_frame = None
+    global action_segment, handedness_in, base_selected_frame_id, flush_buffer, out_frame_count
 
     # Run hand detection
     frame.flags.writeable = False
@@ -40,6 +44,9 @@ def classify(frame, width, height, top, bottom, fridge_left, debug=False, no_con
     results = hands.process(frame)
     frame.flags.writeable = True
     frame = cv.cvtColor(frame, cv.COLOR_RGB2BGR)
+
+    # Update frame buffer
+    add_frame_to_buffer(frame)
 
     # Parse results
     if results.multi_hand_landmarks:
@@ -54,13 +61,7 @@ def classify(frame, width, height, top, bottom, fridge_left, debug=False, no_con
 
                 # If hand goes into the fridge capture this frame
                 if prev_action_segment == constants.ActionSegment.OUT:
-                    # When hand goes in this is a new action segment so reset the base frame id
-                    base_selected_frame_id = None
-                    selected_frame_id = generate_frame_id(action_segment)
-                    base_selected_frame_id = selected_frame_id.split('_')[1]
-
-                    selected_frame = frame.copy()
-                    draw_label(selected_frame)
+                    flush_buffer = True
 
             # If hand not in fridge && its the same hand that was previously inside the fridge
             elif (handedness_in == handedness.classification[0].label):
@@ -68,25 +69,37 @@ def classify(frame, width, height, top, bottom, fridge_left, debug=False, no_con
 
                 # If hand goes out of the fridge capture this frame
                 if prev_action_segment == constants.ActionSegment.IN:
-                    selected_frame = frame.copy()
-                    draw_label(selected_frame)
-                    selected_frame_id = generate_frame_id(action_segment)
+                    out_frame_count = constants.FRAME_BUFFER_SIZE                 
 
             # Draw handlandmarks
             if debug:
                 mp_drawing.draw_landmarks(
-                frame,
-                hand_landmarks,
-                mp_hands.HAND_CONNECTIONS,
-                mp_drawing_styles.get_default_hand_landmarks_style(),
-                mp_drawing_styles.get_default_hand_connections_style())
+                    frame,
+                    hand_landmarks,
+                    mp_hands.HAND_CONNECTIONS,
+                    mp_drawing_styles.get_default_hand_landmarks_style(),
+                    mp_drawing_styles.get_default_hand_connections_style()
+                )
 
     if debug:
         cv.line(frame, (top['x'], top['y']), (bottom['x'], bottom['y']), (0, 255, 0), 2, lineType=cv.LINE_AA)
-        # print("HAND", handedness_in)
         draw_label(frame)
 
-    return frame, selected_frame, selected_frame_id
+    if flush_buffer:
+        selected_frames = []
+        selected_frame_ids = []
+
+        while frame_buffer:
+            uid, selected_frame = frame_buffer.popleft()
+
+            selected_frames.append(selected_frame)
+            selected_frame_ids.append(uid)
+
+        flush_buffer = False
+
+        return frame, selected_frames, selected_frame_ids
+
+    return frame, None, None
 
 
 def hand_in_fridge(hand_landmarks, width, top, fridge_left):
@@ -104,13 +117,34 @@ def draw_label(frame):
     cv.putText(frame, action_segment.name, (x + 5, y), font, font_scale, color, 1, cv.LINE_AA)
 
 
-def generate_frame_id(prev_action_segment):
+def generate_frame_id(action_segment, clean=False):
     global base_selected_frame_id
-    print(base_selected_frame_id)
 
-    if base_selected_frame_id is None:
+    if clean or base_selected_frame_id is None:
         base_selected_frame_id = str(uuid.uuid4())[:8]
 
-    uid = f'{int(time.time())}_{base_selected_frame_id}_{prev_action_segment.name}'
+    uid = f'{int(time.time())}_{base_selected_frame_id}_{action_segment.name}'
     return uid
+    
+
+def add_frame_to_buffer(frame):
+    global flush_buffer, out_frame_count
+    frame = frame.copy()
+
+    # Frames going in 
+    if out_frame_count < 0:
+        uid = generate_frame_id(constants.ActionSegment.IN)
+        frame_buffer.append((uid, frame))
+
+    # frames going out
+    else:
+        uid = generate_frame_id(constants.ActionSegment.OUT)
+        frame_buffer.append((uid, frame))
+        out_frame_count -= 1
+
+        # When finished reset flags and generate new base_id
+        if out_frame_count == 0:
+            flush_buffer = True
+            out_frame_count = -1
+            generate_frame_id(action_segment, True)
     
