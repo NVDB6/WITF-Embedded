@@ -1,5 +1,6 @@
 import json
 import os
+import threading
 import time
 import cv2
 import constants
@@ -9,6 +10,7 @@ import argparse
 # from picamera2.outputs import FfmpegOutput
 from calibration import manual_calibrate
 from classify import classify
+from api import send_batch
 
 ### Args ###
 parser = argparse.ArgumentParser()
@@ -84,6 +86,9 @@ if save_frame_dir:
         print(e)
         exit()
 
+# Globals
+paths = []
+lock = threading.Lock()
 
 ### Main ###
 while True:
@@ -107,7 +112,16 @@ while True:
         classify_time += f-s
         if selected_frames and save_frame_dir:
             for i, (selected_frame, selected_frame_id) in enumerate(zip(selected_frames, selected_frame_ids)):
-                cv2.imwrite(os.path.join(save_frame_dir, f'frame_{selected_frame_id}_{i+1}.png'), selected_frame)
+                path = os.path.join(save_frame_dir, f'frame_{selected_frame_id}_{i+1}.png')
+                cv2.imwrite(path, selected_frame)
+                with lock:
+                    paths.append(path)
+        
+        # API
+        if len(paths) >= 10:
+            paths_to_send = paths.copy()  # Create a copy of the paths list to send on another thread
+            paths = []  # Clear the paths list
+            threading.Thread(target=send_batch, args=(paths_to_send,)).start()
 
         # Display the image
         s = time.perf_counter()
