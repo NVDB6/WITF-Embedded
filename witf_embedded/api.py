@@ -6,5 +6,8 @@ def send_batch(image_paths):
 
     for filename in image_paths:
         images[filename] = open(filename, 'rb')
-        
-    response = requests.post("http://localhost:3000/upload-images", files=images)
+    
+    try:
+        requests.post("http://localhost:3000/upload-images", files=images)
+    except Exception as e:
+        print(e)

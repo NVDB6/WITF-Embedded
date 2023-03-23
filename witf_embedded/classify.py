@@ -13,7 +13,7 @@ mp_drawing_styles = mp.solutions.drawing_styles
 
 hands = mp_hands.Hands(
     static_image_mode=False,
-    max_num_hands=2,
+    max_num_hands=1,
     min_detection_confidence=constants.MIN_DETECTION_CONFIDENCE,
     min_tracking_confidence=constants.MIN_TRACKING_CONFIDENCE,
 )
@@ -41,7 +41,12 @@ def classify(frame, width, height, top, bottom, fridge_left, debug=False, no_con
     frame.flags.writeable = False
     if not no_convert:
         frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
-    results = hands.process(frame)
+    resized_frame = cv.resize(frame, (int(width/10), int(height/10)))
+    s = time.perf_counter()
+    results = hands.process(resized_frame)
+    f = time.perf_counter()
+    #print('p2', f-s)
+
     frame.flags.writeable = True
     frame = cv.cvtColor(frame, cv.COLOR_RGB2BGR)
 

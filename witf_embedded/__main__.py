@@ -46,6 +46,18 @@ if use_pi:
     picam2.start()
 else:
     capture = cv2.VideoCapture(video_path or 0)
+    print(capture.set(cv2.CAP_PROP_FRAME_WIDTH, 1080))
+    print(capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 1440))
+    print(capture.set(cv2.CAP_PROP_ZOOM, 2.0))
+    print('All properties:')
+    print('----------------')
+    for prop in dir(cv2):
+        if prop.startswith('CAP_PROP_'):
+            print(prop, capture.get(getattr(cv2, prop)))
+
+   
+    time.sleep(1)
+
 
 ### Calibrate ###
 if not calibrated:
@@ -110,6 +122,8 @@ while True:
         frame, selected_frames, selected_frame_ids = classify(frame, width, height, top, bottom, fridge_left, debug=debug)
         f = time.perf_counter()
         classify_time += f-s
+
+        #print('p1', f-s)
         if selected_frames and save_frame_dir:
             for i, (selected_frame, selected_frame_id) in enumerate(zip(selected_frames, selected_frame_ids)):
                 path = os.path.join(save_frame_dir, f'frame_{selected_frame_id}_{i+1}.png')
