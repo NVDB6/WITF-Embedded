@@ -1,7 +1,21 @@
 from enum import Enum
+import logging
 import os
 import cv2
 from pathlib import Path
+
+# Debug
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
+handler = logging.FileHandler('embedded.log')
+
+formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+handler.setFormatter(formatter)
+
+logger.addHandler(handler)
+
+LOGGER = logger
 
 # Paths
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -14,17 +28,29 @@ DEFAULT_CODEC = cv2.VideoWriter_fourcc(*'avc1')
 FPS = 30
 
 # Hand Tracking
-MIN_DETECTION_CONFIDENCE = 0.8
-MIN_TRACKING_CONFIDENCE = 0.8
+MIN_DETECTION_CONFIDENCE = 0.65
+MIN_TRACKING_CONFIDENCE = 0.65
+STATIC_IMAGE_MODE = False
+MAX_NUM_HANDS = 1
 
 # Actions
 class ActionSegment(Enum):
     OUT = 0
     IN = 1
     UNDEF = 2
+
 class Position(Enum):
     Left = 0
     RIGHT = 1
 
 # Frame Selection
-FRAME_BUFFER_SIZE = 5
+FRAME_BUFFER_SIZE = 3
+
+class Flush(Enum):
+    IN = 0
+    OUT = 1
+
+# Capture
+WIDTH = 1920
+HEIGHT = 1080
+CAPTURE_BUFFER_SIZE = 5

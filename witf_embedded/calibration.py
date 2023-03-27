@@ -5,10 +5,6 @@ import cv2
 from typing import Tuple
 import constants
 
-resource_dir = '../resources/'
-video_name = 'calibration_test_3_short.mp4'
-video_path = f'{resource_dir}/input/{video_name}'
-
 def manual_calibrate(capture=None, pi_camera=None) -> Tuple[Tuple[int,int], Tuple[int, int]]:
     p1 = (0, 0)
     p2 = (0, 0)
