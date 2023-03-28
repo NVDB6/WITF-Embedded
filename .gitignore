@@ -60,6 +60,7 @@ coverage.xml
 
 # IDE things
 .idea
+.vscode
 
 # Django stuff:
 *.log
@@ -111,10 +112,13 @@ celerybeat.pid
 .env
 .venv
 env/
-venv/
+venv*/
 ENV/
 env.bak/
 venv.bak/
+
+# Mac
+.DS_Store
 
 # Spyder project settings
 .spyderproject
@@ -143,3 +147,10 @@ dmypy.json
 /dataSources/
 /dataSources.local.xml
 resources/.DS_Store
+
+# debug
+/debug
+
+# resources
+/resources/input
+/resources/output
