@@ -61,6 +61,7 @@ coverage.xml
 # IDE things
 .idea
 .vscode
+.vscode
 
 # Django stuff:
 *.log
@@ -154,3 +155,16 @@ resources/.DS_Store
 # resources
 /resources/input
 /resources/output
+
+# dev
+/notebooks
+
+# debug
+/debug
+
+# resources
+/resources/input
+/resources/output
+
+# dev
+/notebooks
