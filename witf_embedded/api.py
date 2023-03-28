@@ -5,7 +5,6 @@ def send_batch(image_paths):
     images = dict()
 
     for filename in image_paths:
-        print(filename)
         images[filename] = open(filename, 'rb')
     
     try:

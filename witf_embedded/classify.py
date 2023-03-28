@@ -182,8 +182,8 @@ mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
 
 hands = mp_hands.Hands(
-    static_image_mode=True,
-    max_num_hands=1,
+    static_image_mode=constants.STATIC_IMAGE_MODE,
+    max_num_hands=constants.MAX_NUM_HANDS,
     min_detection_confidence=constants.MIN_DETECTION_CONFIDENCE,
     min_tracking_confidence=constants.MIN_TRACKING_CONFIDENCE,
 )
@@ -217,7 +217,8 @@ def classify(frame, width, height, top, bottom, fridge_left, debug=False, no_con
         except Exception as e:
             print("Error",e)
             sys.exit()
-    resized_frame = cv.resize(frame, (int(width/10), int(height/10)))
+
+    resized_frame = cv.resize(frame, (int(width/constants.DOWNSCALE_FACTOR), int(height/constants.DOWNSCALE_FACTOR)))
     s = time.perf_counter()
     results = hands.process(resized_frame)
     f = time.perf_counter()
@@ -227,22 +228,26 @@ def classify(frame, width, height, top, bottom, fridge_left, debug=False, no_con
     # Update frame buffer
     add_frame_to_buffer(frame)
 
+    prev_action_segment = action_segment
     # Parse results
     if results.multi_hand_landmarks:
         for hand_landmarks, handedness in zip(results.multi_hand_landmarks,
                                                 results.multi_handedness):
-            prev_action_segment = action_segment
             
-            # Hand in fridge
-            if (hand_in_fridge(hand_landmarks, width, top, fridge_left)):
+            # Filter out small hands or hands in the background
+            if should_ignore_hand(hand_landmarks, height):
+                logger.debug('[IGNORING HAND]')
+                continue
+
+            # Check if hand in fridge
+            if (hand_in_fridge(hand_landmarks, width, top)):
                 if not hand_already_in_fridge:
-                    
                     handedness_in = handedness.classification[0].label
                     action_segment = constants.ActionSegment.IN
 
                     # If hand goes into the fridge then flush the buffer
                     if prev_action_segment == constants.ActionSegment.OUT:
-                        logger.debug(f'[EVENT][HAND-IN]')
+                        logger.info(f'[EVENT][HAND-IN]')
                         flush_buffer = constants.Flush.IN
 
                     hand_already_in_fridge = True
@@ -253,7 +258,7 @@ def classify(frame, width, height, top, bottom, fridge_left, debug=False, no_con
 
                 # If hand goes out of the fridge, start capturing out frames in buffer
                 if prev_action_segment == constants.ActionSegment.IN:
-                    logger.debug(f'[EVENT][HAND-OUT]')
+                    logger.info(f'[EVENT][HAND-OUT]')
                     out_frame_count = constants.FRAME_BUFFER_SIZE       
 
                 hand_already_in_fridge = False          
@@ -293,16 +298,15 @@ def classify(frame, width, height, top, bottom, fridge_left, debug=False, no_con
             selected_frame_ids.append(f'{frame_time}_{uid}_{action_tag}')
 
         flush_buffer = None
-        logger.debug(f'[PROCESS TIME]: Flush time {time.perf_counter() - s}')
+        logger.debug(f'[PERFORMANCE][PROCESS TIME]: Flush time {time.perf_counter() - s}')
 
         return frame, selected_frames, selected_frame_ids
 
     return frame, None, None
 
 
-def hand_in_fridge(hand_landmarks, width, top, fridge_left):
-    hand_left = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_TIP].x * width < top['x']
-    return hand_left == fridge_left # Hand in fridge if both are in the left side or right side
+def hand_in_fridge(hand_landmarks, width, top):
+    return any((landmark.x * width > top['x']) for landmark in hand_landmarks.landmark)
 
 
 def draw_label(frame):
@@ -315,6 +319,20 @@ def draw_label(frame):
     cv.putText(frame, action_segment.name, (x + 5, y), font, font_scale, color, 1, cv.LINE_AA)
 
 
+def should_ignore_hand(hand_landmarks, height):
+    def get_highest_point_value(hand_landmarks):
+        return min(hand_landmarks.landmark, key=lambda p: p.y)
+    
+    def get_lowest_point_value(hand_landmarks):
+        return max(hand_landmarks.landmark, key=lambda p: p.y)
+
+    top = get_highest_point_value(hand_landmarks).y * height
+    bottom = get_lowest_point_value(hand_landmarks).y * height
+    diff = abs(top - bottom)
+
+    return diff <= height*constants.FILTER_RATIO
+    
+    
 def generate_uid():
     return str(uuid.uuid4())[:8]
 

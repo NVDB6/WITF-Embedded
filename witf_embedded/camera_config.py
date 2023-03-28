@@ -91,6 +91,14 @@ class Main:
         print('Center Stage', self.device.isCenterStageActive())
         print('Center Stage Toggle', self.device._setCenterStageEnabled_(False))
 
+    def printFrameRates(self):
+        device_format = self.device.activeFormat()
+
+        frame_rate_ranges = device_format.videoSupportedFrameRateRanges()
+        
+        for rate in frame_rate_ranges:
+            print(rate.maxFrameRate())
+        
 
     def print_useful_stuff(self):
         print("Frame Duration:", (self.device.activeVideoMinFrameDuration()))
@@ -119,15 +127,6 @@ class Main:
        
         self.print_useful_stuff()
         self.is_center_stage_active()
-        while True:
-            # Wait for a key press or window close
-            # print(self.session)
-            # print(self.capture_output.sampleBufferDelegate())
-            # print(VideoDelegate.pyobjc_classMethods.conformsToProtocol_(AVCaptureVideoDataOutputSampleBufferDelegate))
-
-            # self.is_center_stage_active()
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
 
 
 
@@ -152,10 +151,10 @@ def printAllDevices():
 
 if __name__ == '__main__':
     # printAllDevices()
-    # main = Main()
+    main = Main()
+    main.printFrameRates()
     # main.lock_config()
     # main.run()
-    print(cv2.getBuildInformation())
 
 # def setup():
 #     device_type = [AVFoundation.AVCaptureDeviceTypeBuiltInTripleCamera, AVFoundation.AVCaptureDeviceTypeExternalUnknown]
